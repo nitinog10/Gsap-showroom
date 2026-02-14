@@ -25,6 +25,7 @@ const HeroSection = () => {
     const stickyRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const glowRef = useRef<HTMLDivElement>(null);
 
     const scrollToProjects = useCallback(() => {
         document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
@@ -62,18 +63,49 @@ const HeroSection = () => {
             /* Scroll indicator */
             tl.from(scrollRef.current, { opacity: 0, duration: 0.6 }, '-=0.1');
 
-            /* ── Scroll: pin, then scale+fade exit ── */
-            gsap.timeline({
+            /* ── Cinematic Scroll Exit ── */
+            /* Pin the hero, then smoothly scale + fade + split away */
+            const exitTL = gsap.timeline({
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: 'top top',
-                    end: '+=120%',
-                    scrub: 1.2,
+                    end: '+=150%',
+                    scrub: 1.5,
                     pin: stickyRef.current
                 }
-            })
-                .to(contentRef.current, { scale: 1.06, opacity: 0, y: -50, duration: 1, ease: 'power2.in' })
-                .to(scrollRef.current, { opacity: 0, duration: 0.3 }, '<');
+            });
+
+            // Content scales up, fades, and drifts upward — cinematic zoom-through
+            exitTL.to(contentRef.current, {
+                scale: 1.15,
+                opacity: 0,
+                y: -80,
+                filter: 'blur(8px)',
+                duration: 1,
+                ease: 'power2.in'
+            });
+
+            // Scroll indicator vanishes early
+            exitTL.to(scrollRef.current, { opacity: 0, y: -30, duration: 0.3 }, '<');
+
+            // Background glows intensify and shift during exit
+            if (glowRef.current) {
+                exitTL.to(glowRef.current, {
+                    scale: 1.4,
+                    opacity: 0,
+                    duration: 1,
+                    ease: 'power2.in'
+                }, '<');
+            }
+
+            // Corner marks fade
+            exitTL.to('.corner-mark', {
+                opacity: 0,
+                scale: 0.8,
+                stagger: 0.05,
+                duration: 0.4,
+                ease: 'power2.in'
+            }, '<0.2');
 
         }, containerRef);
 
@@ -88,7 +120,7 @@ const HeroSection = () => {
                 <HeroCanvas />
 
                 {/* Soft gradient glows behind text */}
-                <div className="absolute inset-0 z-[1] pointer-events-none">
+                <div ref={glowRef} className="absolute inset-0 z-[1] pointer-events-none will-change-transform">
                     <div className="absolute top-[20%] left-[25%] w-[450px] h-[450px] rounded-full opacity-[0.14]"
                         style={{ background: 'radial-gradient(circle, hsl(265 85% 58% / 0.5), transparent 70%)', filter: 'blur(100px)' }} />
                     <div className="absolute top-[35%] right-[20%] w-[350px] h-[350px] rounded-full opacity-[0.10]"
@@ -150,10 +182,10 @@ const HeroSection = () => {
                 </div>
 
                 {/* Corner marks */}
-                <div className="absolute top-6 left-6 w-6 h-6 border-l border-t border-white/[0.06]" />
-                <div className="absolute top-6 right-6 w-6 h-6 border-r border-t border-white/[0.06]" />
-                <div className="absolute bottom-6 left-6 w-6 h-6 border-l border-b border-white/[0.06]" />
-                <div className="absolute bottom-6 right-6 w-6 h-6 border-r border-b border-white/[0.06]" />
+                <div className="corner-mark absolute top-6 left-6 w-6 h-6 border-l border-t border-white/[0.06]" />
+                <div className="corner-mark absolute top-6 right-6 w-6 h-6 border-r border-t border-white/[0.06]" />
+                <div className="corner-mark absolute bottom-6 left-6 w-6 h-6 border-l border-b border-white/[0.06]" />
+                <div className="corner-mark absolute bottom-6 right-6 w-6 h-6 border-r border-b border-white/[0.06]" />
             </div>
         </div>
     );
